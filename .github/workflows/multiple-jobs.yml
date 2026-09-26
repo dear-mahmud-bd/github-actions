@@ -1,48 +1,95 @@
 name: Multiple Jobs Lab
+
 on:
   push:
     branches:
       - main
 
-
 jobs:
+
   build:
     name: Build Application
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      BUILD_VERSION: "1.0.0"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Build step
+
+      - name: Build application
         run: |
-          echo "🏗️ Building the application..."
+          echo "🏗️ Building application..."
+          echo "Version: $BUILD_VERSION"
           echo "Build completed successfully!"
+
+      - name: Print branch information
+        run: |
+          echo "Current branch: ${{ github.ref }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
+
+      - name: Build status
+        if: success()
+        run: echo "✅ Build succeeded!"
+
+      - name: Handle build failure
+        if: failure()
+        run: echo "⚠️ Build failed. Please check the logs!"
+
 
   test:
     name: Run Tests
-    needs: build  # Depends on build job
+    needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Run tests
         run: |
           echo "🧪 Running tests..."
           echo "All tests passed!"
 
+      - name: Test status
+        if: success()
+        run: echo "✅ Tests passed successfully!"
+
+      - name: Handle test failure
+        if: failure()
+        run: echo "❌ Tests failed!"
+
+
   deploy:
     name: Deploy Application
-    needs: [build, test]  # Depends on both build and test jobs
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy
         run: |
           echo "🚀 Deploying application..."
           echo "Deployment successful!"
 
+      - name: Deployment status
+        if: success()
+        run: echo "✅ Deployment succeeded!"
+
+      - name: Handle deployment failure
+        if: failure()
+        run: echo "❌ Deployment failed!"
+
+
   notify:
     name: Send Notification
-    needs: deploy  # Depends on deploy job
+    needs: deploy
     runs-on: ubuntu-latest
+
     steps:
       - name: Send notification
         run: |
           echo "📧 Sending deployment notification..."
           echo "Notification sent!"
+
+          
